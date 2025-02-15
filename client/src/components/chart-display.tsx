@@ -9,9 +9,33 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download } from "lucide-react";
-import { type Dataset, type ChartConfig } from "@shared/schema";
-import { Chart } from "chart.js/auto";
+import { type Dataset, type ChartConfig, type DataRow } from "@shared/schema";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartType,
+} from "chart.js";
 import { Line, Bar, Pie } from "react-chartjs-2";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface ChartDisplayProps {
   dataset: Dataset;
@@ -24,14 +48,14 @@ export function ChartDisplay({ dataset }: ChartDisplayProps) {
     yAxis: dataset.headers[1],
   });
 
-  const chartRef = useRef<Chart | null>(null);
+  const chartRef = useRef<ChartJS>(null);
 
   const chartData = {
-    labels: dataset.data.map((row: any) => row[config.xAxis]),
+    labels: dataset.data.map((row: DataRow) => row[config.xAxis]),
     datasets: [
       {
         label: config.yAxis,
-        data: dataset.data.map((row: any) => row[config.yAxis]),
+        data: dataset.data.map((row: DataRow) => Number(row[config.yAxis]) || 0),
         backgroundColor: "rgba(59, 130, 246, 0.5)",
         borderColor: "rgb(59, 130, 246)",
       },
@@ -59,8 +83,8 @@ export function ChartDisplay({ dataset }: ChartDisplayProps) {
       <div className="flex gap-4 flex-wrap">
         <Select
           value={config.type}
-          onValueChange={(value: any) =>
-            setConfig({ ...config, type: value })
+          onValueChange={(value: ChartType) =>
+            setConfig({ ...config, type: value as ChartConfig["type"] })
           }
         >
           <SelectTrigger className="w-32">

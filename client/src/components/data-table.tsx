@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { type Dataset } from "@shared/schema";
+import { type Dataset, type DataRow } from "@shared/schema";
 
 interface DataTableProps {
   dataset: Dataset;
@@ -17,7 +17,7 @@ interface DataTableProps {
 export function DataTable({ dataset }: DataTableProps) {
   const [filter, setFilter] = useState("");
 
-  const filteredData = dataset.data.filter((row: any) =>
+  const filteredData = dataset.data.filter((row: DataRow) =>
     Object.values(row).some((value) =>
       String(value).toLowerCase().includes(filter.toLowerCase())
     )
@@ -42,8 +42,8 @@ export function DataTable({ dataset }: DataTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredData.map((row: any, i) => (
-              <TableRow key={i}>
+            {filteredData.map((row: DataRow, index: number) => (
+              <TableRow key={index}>
                 {dataset.headers.map((header) => (
                   <TableCell key={header}>{row[header]}</TableCell>
                 ))}
