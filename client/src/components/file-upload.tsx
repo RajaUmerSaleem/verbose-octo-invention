@@ -20,7 +20,16 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
     formData.append("file", file);
 
     try {
-      const res = await apiRequest("POST", "/api/upload", formData);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include"
+      });
+
+      if (!res.ok) {
+        throw new Error(`Upload failed: ${res.statusText}`);
+      }
+
       const dataset = await res.json();
       queryClient.invalidateQueries({ queryKey: ["/api/datasets"] });
       onUploadComplete(dataset);
@@ -29,9 +38,10 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
         description: "File uploaded successfully",
       });
     } catch (error) {
+      console.error("Upload error:", error);
       toast({
         title: "Error",
-        description: "Failed to upload file",
+        description: error instanceof Error ? error.message : "Failed to upload file",
         variant: "destructive",
       });
     }
