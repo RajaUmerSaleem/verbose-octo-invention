@@ -3,6 +3,7 @@ import { createServer } from "http";
 import { storage } from "./storage";
 import multer from "multer";
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
 import { insertDatasetSchema } from "@shared/schema";
 import { log } from "./vite";
 
@@ -21,30 +22,67 @@ export async function registerRoutes(app: Express) {
       }
 
       log(`Received file: ${req.file.originalname}`);
-      const fileContent = req.file.buffer.toString();
-      const result = Papa.parse(fileContent, { 
-        header: true,
-        skipEmptyLines: true,
-        dynamicTyping: true
-      });
 
-      if (result.errors.length > 0) {
-        log(`Parse errors: ${JSON.stringify(result.errors)}`);
+      let data: any[] = [];
+      let headers: string[] = [];
+
+      // Handle based on file type
+      if (req.file.originalname.endsWith('.csv')) {
+        // Parse CSV
+        const fileContent = req.file.buffer.toString();
+        const result = Papa.parse(fileContent, { 
+          header: true,
+          skipEmptyLines: true,
+          dynamicTyping: true
+        });
+
+        if (result.errors.length > 0) {
+          log(`Parse errors: ${JSON.stringify(result.errors)}`);
+          return res.status(400).json({ 
+            message: "Invalid CSV file",
+            errors: result.errors
+          });
+        }
+
+        data = result.data;
+        if (data.length > 0) {
+          headers = Object.keys(data[0]);
+        }
+      } else if (req.file.originalname.match(/\.xlsx?$/)) {
+        // Parse Excel
+        const workbook = XLSX.read(req.file.buffer);
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        // Convert Excel data to JSON
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+
+        if (jsonData.length > 0) {
+          headers = Object.keys(jsonData[0]);
+          data = jsonData.map(row => {
+            const processedRow: Record<string, string | number> = {};
+            headers.forEach(header => {
+              const value = row[header];
+              // Try to convert to number if possible
+              processedRow[header] = !isNaN(Number(value)) ? Number(value) : value;
+            });
+            return processedRow;
+          });
+        }
+      } else {
         return res.status(400).json({ 
-          message: "Invalid CSV file",
-          errors: result.errors
+          message: "Unsupported file format. Please upload a CSV or Excel file."
         });
       }
 
-      if (!result.data || result.data.length === 0) {
+      if (data.length === 0) {
         return res.status(400).json({ message: "File contains no data" });
       }
 
-      const headers = Object.keys(result.data[0]);
       const dataset = {
         fileName: req.file.originalname,
         headers,
-        data: result.data,
+        data,
       };
 
       const parsedData = insertDatasetSchema.safeParse(dataset);
