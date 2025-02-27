@@ -71,8 +71,10 @@
     "react-dropzone": "^14.3.5",
     "react-hook-form": "^7.53.1",
     "react-icons": "^5.4.0",
+    "react-loader-spinner": "^6.1.6",
     "react-resizable-panels": "^2.1.4",
     "recharts": "^2.13.0",
+    "rest-express": "file:",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.0",
@@ -106,5 +108,9 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
-  }
+  },
+  "main": "postcss.config.js",
+  "keywords": [],
+  "author": "",
+  "description": ""
 }
